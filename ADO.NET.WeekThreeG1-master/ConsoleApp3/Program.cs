@@ -12,6 +12,7 @@ namespace ConsoleApp3
         {
             Model1 m = new Model1();
 
+            #region ClassWork
             //var whoIsBoss = from Employees in m.Employees
             //             let isBoss = (Employees.ReportsTo==null)
             //             select new
@@ -185,36 +186,146 @@ namespace ConsoleApp3
             //    Console.WriteLine();
             //}
 
-            var productsByUnits = from Products in m.Products.ToList()
-                                  let groups = new
-                                  {
-                                      many = (Products.UnitsInStock >= 101),
-                                      middle = (Products.UnitsInStock <= 100 && Products.UnitsInStock >= 50),
-                                      little = (Products.UnitsInStock <= 49 && Products.UnitsInStock >= 20),
-                                      veryLittle = (Products.UnitsInStock <= 19)
-                                  }
-                                  orderby groups
-                                  group Products by groups into p
-                                  select new
-                                  {
-                                     Key = p.Key,
-                                     Count = p.Count(),
-                                     Products = from products in p
-                                              select products
-                                  };
+            //var ordersByShippingCompany = from Orders in m.Orders.ToList()
+            //                              orderby Orders.ShipVia
+            //                              group Orders by Orders.ShipVia into o
+            //                              select new
+            //                              {
+            //                                  Key = o.Key,
+            //                                  Count = o.Count(),
+            //                                  Orders = from orders in o
+            //                                           select orders
+            //                              };
+            //foreach(var item in ordersByShippingCompany)
+            //{
+            //    Console.WriteLine("ShipVia: "+item.Key);
+            //    foreach(Orders order in item.Orders)
+            //    {
+            //        Console.WriteLine(order.OrderID);
+            //    }
+            //    Console.WriteLine();
+            //}
+            #endregion
 
-            foreach (var group in productsByUnits)
+            #region Homework
+
+            // Task 1 
+
+            //var employeesCustomers = from groupedItem in m.Orders.ToList()
+            //                         group groupedItem by groupedItem.EmployeeID into o
+            //                         select new
+            //                         {
+            //                             Employee = o.Key,
+            //                             Customers = from customers in o
+            //                                         select customers.CustomerID
+            //                         };
+
+            //foreach(var item in employeesCustomers)
+            //{
+            //    Console.WriteLine("EmployeeID: "+item.Employee);
+            //    Console.WriteLine("CustomerIDs:");
+            //    foreach (var customer in item.Customers)
+            //    {
+            //        Console.WriteLine(customer);
+            //    }
+            //    Console.WriteLine();
+            //}
+
+            // Task 2
+
+            var employeesProductIDs = from orders in m.Orders.ToList()
+                                    join orderDetails in m.Order_Details.ToList() 
+                                    on orders.OrderID equals orderDetails.OrderID
+                                    join employee in m.Employees.ToList()
+                                    on orders.EmployeeID equals employee.EmployeeID
+                                    select new
+                                     {
+                                         EmployeeId = orders.EmployeeID,
+                                         EmployeeFirstName=employee.FirstName,
+                                         ProductId=orderDetails.ProductID
+                                     };
+
+            var employeesProducts = from employeeProdIds in employeesProductIDs
+                                    join products in m.Products.ToList()
+                                    on employeeProdIds.ProductId equals products.ProductID
+                                    select new
+                                    {
+                                        Employee = employeeProdIds.EmployeeFirstName,
+                                        Product = products.ProductName
+                                    };
+
+            var groupedProductsByEmployees = from ep in employeesProducts
+                                             group ep by ep.Employee into g
+                                             select new
+                                             {
+                                                 Employee=g.Key,
+                                                 Products=from products in g
+                                                          select products.Product
+                                             };
+
+            foreach(var employee in groupedProductsByEmployees)
             {
-                Console.WriteLine(group.Key);
-                foreach (Products product in group.Products)
+                Console.WriteLine("EmployeeName: "+employee.Employee);
+                Console.WriteLine("Products:");
+                foreach(var products in employee.Products)
                 {
-                    Console.WriteLine(product.ProductName);
+                    Console.WriteLine(products);
                 }
                 Console.WriteLine();
             }
 
-            Console.ReadLine();
 
+            // Task 3
+            var ordersByCountry = from orders in m.Orders.ToList()
+                                  join customers in m.Customers.ToList()
+                                  on orders.CustomerID equals customers.CustomerID
+                                  select new
+                                  {
+                                      Country = customers.Country,
+                                      OrderId = orders.OrderID
+                                  };
+            var ordersSum=from groupedItem in (from Orders in m.Order_Details.ToList()
+                                               let cost = (Orders.Quantity * Orders.UnitPrice) 
+                                               join ordersCountry in ordersByCountry
+                                               on Orders.OrderID equals ordersCountry.OrderId
+                                               select new
+                                               {
+                                                   ordersCountry.Country,
+                                                   cost
+                                               })
+                          group groupedItem by groupedItem.Country;
+
+            var sumByCountry = from item in ordersSum
+                                  select new
+                                  {
+                                      Country = item.Key,
+                                      TotalSum = item.Sum(p => p.cost)
+                                  };
+
+            foreach(var country in sumByCountry)
+            {
+                Console.WriteLine(country);
+            }
+
+            // Task 4
+
+            var employeesCities = from employees in m.Employees.ToList()
+                                  select new
+                                  {
+                                      Employee = (employees.FirstName + employees.LastName),
+                                      City = employees.City
+                                  };
+
+            var customersCities = from customers in m.Customers.ToList()
+                                  select new
+                                  {
+                                      Customer = customers.CompanyName,
+                                      City = customers.City
+                                  };
+
+         #endregion
+
+            Console.ReadLine();
         }
     }
 }
