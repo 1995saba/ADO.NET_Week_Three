@@ -310,7 +310,39 @@ namespace ConsoleApp3
 
             // Task 4
 
+            var customerCity = from customers in m.Customers.ToList()
+                               group customers by customers.City into c
+                               select new
+                               {
+                                   City = c.Key,
+                                   CompanyName = from cn in c select cn.CompanyName
+                               };
+            var employeeCity = from employees in m.Employees.ToList()
+                               group employees by employees.City into e
+                               select new
+                               {
+                                   City = e.Key,
+                                   Name = from n in e select new { n.FirstName, n.LastName }
+                               };
+            Console.WriteLine("Customers: ");
+            foreach (var item in customerCity)
+            {
+                Console.WriteLine(item.City);
+                foreach(var customer in item.CompanyName)
+                {
+                    Console.WriteLine(customer);
+                }
+            }
 
+            Console.WriteLine("Employees: ");
+            foreach (var item in employeeCity)
+            {
+                Console.WriteLine(item.City);
+                foreach (var employee in item.Name)
+                {
+                    Console.WriteLine(employee.FirstName+" "+employee.LastName);
+                }
+            }
 
             // Task 5
             var ordersByShipCity = from orders in m.Orders.ToList()
@@ -390,6 +422,40 @@ namespace ConsoleApp3
             }
 
             // Task 8
+
+            var supplierCities = from suppliers in (from suppliers in (from suppliers in m.Suppliers.ToList()
+                                                                       join products in m.Products.ToList()
+                                                                       on suppliers.SupplierID equals products.SupplierID
+                                                                       select new
+                                                                       {
+                                                                           products.ProductID,
+                                                                           suppliers.CompanyName,
+                                                                           suppliers.City
+                                                                       })
+                                                    join orderDetails in m.Order_Details.ToList()
+                                                    on suppliers.ProductID equals orderDetails.ProductID
+                                                    select new
+                                                    {
+                                                        suppliers.ProductID,
+                                                        orderDetails.OrderID,
+                                                        suppliers.CompanyName,
+                                                        suppliers.City
+                                                    })
+                                 join orders in m.Orders.ToList()
+                                 on suppliers.OrderID equals orders.OrderID
+                                 where suppliers.City == orders.ShipCity
+                                 select new
+                                 {
+                                     suppliers.OrderID,
+                                     suppliers.CompanyName,
+                                     suppliers.City
+                                 };
+
+            foreach(var item in supplierCities)
+            {
+                Console.WriteLine($"{item.OrderID}-{item.CompanyName}-{item.City}");
+            }
+
 
             #endregion
 
