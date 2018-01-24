@@ -211,25 +211,25 @@ namespace ConsoleApp3
 
             // Task 1 
 
-            //var employeesCustomers = from groupedItem in m.Orders.ToList()
-            //                         group groupedItem by groupedItem.EmployeeID into o
-            //                         select new
-            //                         {
-            //                             Employee = o.Key,
-            //                             Customers = from customers in o
-            //                                         select customers.CustomerID
-            //                         };
+            var employeesCustomers = from groupedItem in m.Orders.ToList()
+                                     group groupedItem by groupedItem.EmployeeID into o
+                                     select new
+                                     {
+                                         Employee = o.Key,
+                                         Customers = from customers in o
+                                                     select customers.CustomerID
+                                     };
 
-            //foreach(var item in employeesCustomers)
-            //{
-            //    Console.WriteLine("EmployeeID: "+item.Employee);
-            //    Console.WriteLine("CustomerIDs:");
-            //    foreach (var customer in item.Customers)
-            //    {
-            //        Console.WriteLine(customer);
-            //    }
-            //    Console.WriteLine();
-            //}
+            foreach (var item in employeesCustomers)
+            {
+                Console.WriteLine("EmployeeID: " + item.Employee);
+                Console.WriteLine("CustomerIDs:");
+                foreach (var customer in item.Customers)
+                {
+                    Console.WriteLine(customer);
+                }
+                Console.WriteLine();
+            }
 
             // Task 2
 
@@ -306,24 +306,92 @@ namespace ConsoleApp3
             {
                 Console.WriteLine(country);
             }
+            Console.WriteLine();
 
             // Task 4
 
-            var employeesCities = from employees in m.Employees.ToList()
+
+
+            // Task 5
+            var ordersByShipCity = from orders in m.Orders.ToList()
+                                  group orders by orders.ShipCity into o
                                   select new
                                   {
-                                      Employee = (employees.FirstName + employees.LastName),
-                                      City = employees.City
+                                      ShipCity = o.Key,
+                                      Order = from ord in o select ord
                                   };
 
-            var customersCities = from customers in m.Customers.ToList()
-                                  select new
-                                  {
-                                      Customer = customers.CompanyName,
-                                      City = customers.City
-                                  };
+            foreach(var shipCity in ordersByShipCity)
+            {
+                Console.WriteLine("Ship city: "+ shipCity.ShipCity);
+                Console.WriteLine("Orders");
+                foreach(var item in shipCity.Order)
+                {
+                    Console.WriteLine(item.OrderID);
+                }
+                Console.WriteLine();
+            }
 
-         #endregion
+            // Task 6
+            var customerCities = from customers in m.Customers.ToList()
+                                 join orders in m.Orders.ToList()
+                                 on customers.City equals orders.ShipCity
+                                 select new
+                                 {
+                                     CustomerID = customers.CustomerID,
+                                     CompanyName = customers.CompanyName,
+                                     City = orders.ShipCity
+                                 };
+            var groupedCustomers = from customers in customerCities
+                                   group customers by customers.City into c
+                                   select new
+                                   {
+                                       City = c.Key,
+                                       Customers = (from cust in c select cust.CompanyName).Distinct()
+                                   };
+
+            foreach(var city in groupedCustomers)
+            {
+                Console.WriteLine("City: "+city.City);
+                foreach(var customer in city.Customers)
+                {
+                    Console.WriteLine(customer);
+                }
+                Console.WriteLine();
+            }
+
+            // Task 7
+            var employeeCities = from employees in m.Employees.ToList()
+                                 join orders in m.Orders.ToList()
+                                 on employees.City equals orders.ShipCity
+                                 select new
+                                 {
+                                     CustomerID = employees.EmployeeID,
+                                     OrderID = orders.OrderID,
+                                     Name = employees.FirstName,
+                                     City = orders.ShipCity
+                                 };
+            var groupedEmployees = from employees in employeeCities
+                                   group employees by employees.City into e
+                                   select new
+                                   {
+                                       City = e.Key,
+                                       Employees = (from emp in e select emp.Name).Distinct(),
+                                   };
+            foreach(var item in groupedEmployees)
+            {
+                Console.WriteLine("City: "+item.City);
+                foreach(var employee in item.Employees)
+                {
+                    Console.WriteLine("EmployeeName: "+employee);
+                    Console.WriteLine();
+                }
+                Console.WriteLine();
+            }
+
+            // Task 8
+
+            #endregion
 
             Console.ReadLine();
         }
